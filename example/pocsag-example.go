@@ -1,7 +1,3 @@
-Go port of the POCSAG::Encode Perl module.
-
-Example usage
-```
 package main
 
 import (
@@ -32,4 +28,3 @@ func main() {
 	}
 	log.Println("Done")
 }
-```

@@ -120,8 +120,8 @@ func reverseBits(in byte) byte {
 }
 
 // appendContentText appends text message content to the transmission blob
-func appendContentText(content string) (int, []uint32) {
-	out := make([]uint32, 0)
+func appendContentText(content string) (int, Burst) {
+	out := make(Burst, 0)
 	debugf("appendContentText: %s", content)
 
 	bitpos := 0
@@ -186,7 +186,7 @@ func appendContentText(content string) (int, []uint32) {
 }
 
 // appendMessage appends a single message to the end of the transmission blob.
-func appendMessage(startpos int, msg *Message) (int, []uint32) {
+func appendMessage(startpos int, msg *Message) (int, Burst) {
 	// expand the parameters of the message
 	addr := msg.Addr
 	function := byte(0)
@@ -202,7 +202,7 @@ func appendMessage(startpos int, msg *Message) (int, []uint32) {
 	debugf("  frame_addr is %d, current position %d", frameAddr, startpos)
 
 	// append idle codewords, until we're in the right frame for this address
-	tx := make([]uint32, 0)
+	tx := make(Burst, 0)
 	pos := 0
 	for uint32(startpos+pos)%16 != frameAddrCw {
 		debugf("   inserting IDLE codewords in position %d (%d)", startpos+pos, (startpos+pos)%16)
@@ -228,8 +228,8 @@ func appendMessage(startpos int, msg *Message) (int, []uint32) {
 
 // insertSCS inserts Synchronisation Codewords before every 8 POCSAG frames
 // (frame is SC+ 64 bytes of address and message codewords)
-func insertSCS(tx []uint32) []uint32 {
-	out := make([]uint32, 0)
+func insertSCS(tx Burst) Burst {
+	out := make(Burst, 0)
 
 	// each batch is SC + 8 frames, each frame is 2 codewords,
 	// each codeword is 32 bits, so we must insert an SC
@@ -294,9 +294,17 @@ func selectMsg(pos int, msgListRef []*Message) int {
 // any messages which did not fit in the transmission, given the maximum
 // transmission length (in bytes) given in the first parameter. They can be passed
 // in the next Generate() call and sent in the next brrraaaap.
-func Generate(maxLen int, preambleBits int, messages []*Message) ([]uint32, []*Message) {
-	txWithoutScs := make([]uint32, 0)
-	debugf("generate_transmission, maxlen: %d", maxLen)
+func Generate(messages []*Message, optionFns ...OptionFn) (Burst, []*Message) {
+	options := &Options{
+		MaxLen:       3000,
+		PreambleBits: 576,
+	}
+	for _, opt := range optionFns {
+		opt(options)
+	}
+
+	txWithoutScs := make(Burst, 0)
+	debugf("generate_transmission, maxlen: %d", options.MaxLen)
 
 	pos := 0
 	for len(messages) > 0 {
@@ -315,11 +323,11 @@ func Generate(maxLen int, preambleBits int, messages []*Message) ([]uint32, []*M
 		nextLenBytes := nextLen * 4
 		debugf("after this message of %d codewords, burst will be %d codewords and %d bytes long\n", appendLen, nextLen, nextLenBytes)
 
-		if nextLenBytes > maxLen {
+		if nextLenBytes > int(options.MaxLen) {
 			if pos == 0 {
-				debugf("burst would become too large (%d > %d) with first message alone - discarding!", nextLenBytes, maxLen)
+				debugf("burst would become too large (%d > %d) with first message alone - discarding!", nextLenBytes, options.MaxLen)
 			} else {
-				debugf("burst would become too large (%d > %d) - returning msg in queue", nextLenBytes, maxLen)
+				debugf("burst would become too large (%d > %d) - returning msg in queue", nextLenBytes, options.MaxLen)
 				messages = append([]*Message{msg}, messages...)
 				break
 			}
@@ -331,7 +339,7 @@ func Generate(maxLen int, preambleBits int, messages []*Message) ([]uint32, []*M
 
 	// if the burst is empty, return it as completely empty
 	if pos == 0 {
-		return []uint32{}, messages
+		return Burst{}, messages
 	}
 
 	// append a couple of IDLE codewords, otherwise many pagers will
@@ -348,12 +356,12 @@ func Generate(maxLen int, preambleBits int, messages []*Message) ([]uint32, []*M
 	burstLen = len(burst)
 	debugf("transmission with SCs: %d bytes, %d codewords\n%X\n", burstLen*4, burstLen, burst)
 
-	if preambleBits > 0 {
-		preambleWords := preambleBits / 32
-		if preambleBits%32 > 0 {
+	if options.PreambleBits > 0 {
+		preambleWords := options.PreambleBits / 32
+		if options.PreambleBits%32 > 0 {
 			preambleWords++
 		}
-		preamble := make([]uint32, preambleWords)
+		preamble := make(Burst, preambleWords)
 		for i := range preamble {
 			preamble[i] = pocsagPreambleWord
 		}

@@ -1,21 +1,19 @@
 package pocsagencode
 
 import (
-	// "log"
-	// "os"
 	"testing"
 )
 
 func Test_Encode(t *testing.T) {
 	// SetLogger(log.New(os.Stdout, "POCSAG ", log.LstdFlags))
-	enc, left := Generate(3000, 576, []*Message{
+	enc, left := Generate([]*Message{
 		&Message{1300100, "happy christmas!"},
 	})
 	if len(left) != 0 {
 		t.Errorf("expect no message left, got %v", left)
 	}
 
-	expect := []uint32{
+	expect := Burst{
 		// 18 words, 576 bits of preamble
 		0xAAAAAAAA, 0xAAAAAAAA,
 		0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA,
@@ -27,7 +25,7 @@ func Test_Encode(t *testing.T) {
 	}
 
 	if len(enc) != len(expect) {
-		t.Errorf("expected:\n%X\ngot:\n%X\n", expect, enc)
+		t.Errorf("expected:\n%s\ngot:\n%s\n", expect, enc)
 	} else {
 		for i, w := range expect {
 			if w != enc[i] {
@@ -35,4 +33,6 @@ func Test_Encode(t *testing.T) {
 			}
 		}
 	}
+	t.Log(enc)
+	t.Log(enc.Bytes())
 }
