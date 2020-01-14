@@ -1,8 +1,6 @@
 package pocsagencode
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -35,11 +33,4 @@ func Test_Encode(t *testing.T) {
 			}
 		}
 	}
-	t.Log(enc)
-	t.Log(enc.Bytes())
-	binStrs := []string{}
-	for _, b := range enc.Bytes() {
-		binStrs = append(binStrs, fmt.Sprintf("0b%b", b))
-	}
-	t.Log(strings.Join(binStrs, ", "))
 }

@@ -3,6 +3,7 @@ package pocsagencode
 import (
 	"encoding/binary"
 	"fmt"
+	"strings"
 )
 
 type Burst []uint32
@@ -37,4 +38,13 @@ func (b Burst) Bytes() []byte {
 		binary.BigEndian.PutUint32(buf[i*4:], w)
 	}
 	return buf
+}
+
+// BinStr returns a binary string split into bytes
+func (b Burst) BinStr() string {
+	binStrs := []string{}
+	for _, b := range b.Bytes() {
+		binStrs = append(binStrs, fmt.Sprintf("0b%b", b))
+	}
+	return strings.Join(binStrs, ", ")
 }

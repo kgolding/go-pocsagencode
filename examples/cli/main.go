@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	pc "github.com/kgolding/go-pocsagencode"
 )
@@ -27,11 +26,7 @@ func main() {
 	}
 	burst, _ := pc.Generate(messages)
 
-	binStrs := []string{}
-	for _, b := range burst.Bytes() {
-		binStrs = append(binStrs, fmt.Sprintf("0b%b", b))
-	}
 	fmt.Printf("Message: %s\n\n", burst.String())
 	fmt.Printf("Hex bytes: % X\n\n", burst.Bytes())
-	fmt.Printf("Binary: %s\n\n", strings.Join(binStrs, ", "))
+	fmt.Printf("Binary: %s\n\n", burst.BinStr())
 }
