@@ -146,7 +146,7 @@ func appendContentText(content string) (int, Burst) {
 			debugf("  bits of char won't fit since bitpos is %d, got %d bits free, leaving %d bits in next word", bitpos, space, leftbits)
 		}
 
-		word |= (uint32(char) << (31 - 7 - bitpos))
+		word |= (uint32(char) << int(31-7-bitpos))
 
 		bitpos += 7
 
@@ -159,7 +159,7 @@ func appendContentText(content string) (int, Burst) {
 		}
 
 		if leftbits > 0 {
-			word |= (uint32(char) << (31 - leftbits))
+			word |= (uint32(char) << int(31-leftbits))
 			bitpos = leftbits
 			leftbits = 0
 		}
@@ -170,7 +170,7 @@ func appendContentText(content string) (int, Burst) {
 		step := 0
 		for bitpos < 20 {
 			if step == 2 {
-				word |= (1 << (30 - bitpos))
+				word |= (1 << int(30-bitpos))
 			}
 			bitpos++
 			step++
