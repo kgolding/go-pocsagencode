@@ -124,9 +124,9 @@ func appendContentText(content string) (int, Burst) {
 	out := make(Burst, 0)
 	debugf("appendContentText: %s", content)
 
-	bitpos := 0
+	bitpos := uint32(0)
 	word := uint32(0)
-	leftbits := 0
+	leftbits := uint32(0)
 	pos := 0
 
 	// walk through characters in message
@@ -146,7 +146,7 @@ func appendContentText(content string) (int, Burst) {
 			debugf("  bits of char won't fit since bitpos is %d, got %d bits free, leaving %d bits in next word", bitpos, space, leftbits)
 		}
 
-		word |= (uint32(char) << int(31-7-bitpos))
+		word |= (uint32(char)<<31 - 7 - bitpos)
 
 		bitpos += 7
 
