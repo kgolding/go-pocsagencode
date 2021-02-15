@@ -9,12 +9,12 @@ import (
 
 func main() {
 	messages := []*pocsagencode.Message{
-		&pocsagencode.Message{1300100, "Hello Pager!"},
+		&pocsagencode.Message{1300100, "Hello Pager!", false},
 	}
 
 	for i := 0; i < 50; i++ {
 		addr := uint32(1200000 + i*100)
-		messages = append(messages, &pocsagencode.Message{addr, fmt.Sprintf("Hello pager number %d", addr)})
+		messages = append(messages, &pocsagencode.Message{addr, fmt.Sprintf("Hello pager number %d", addr), false})
 	}
 
 	log.Println("Sending", len(messages), "messages")

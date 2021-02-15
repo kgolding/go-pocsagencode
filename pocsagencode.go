@@ -6,8 +6,9 @@ import (
 
 // Message is a single POCSAG Alphanumeric message
 type Message struct {
-	Addr    uint32
-	Content string
+	Addr      uint32
+	Content   string
+	IsNumeric bool
 }
 
 var logger *log.Logger
@@ -185,6 +186,81 @@ func appendContentText(content string) (int, Burst) {
 	return pos, out
 }
 
+// appendContentNumeric appends numeric message content to the transmission blob
+func appendContentNumeric(content string) (int, Burst) {
+	out := make(Burst, 0)
+	debugf("appendContentNumeric: %s", content)
+
+	// 084 2.6]195-3U7[
+	charMap := map[byte]byte{
+		'0': 0, '8': 1, '4': 2, ' ': 3, '2': 4, '.': 5, '6': 6, ']': 7,
+		'1': 8, '9': 9, '5': 10, '-': 11, '3': 12, 'U': 13, '7': 14, '[': 15,
+	}
+
+	bitpos := 0
+	word := uint32(0)
+	leftbits := 0
+	pos := 0
+
+	// walk through characters in message
+	for i, r := range content {
+		var char byte
+		var ok bool
+		// set char from the charMap, and skip the character is not in the map
+		if char, ok = charMap[byte(r)]; !ok {
+			debugf("skipping invlaid char '%s'", string(r))
+			continue
+		}
+
+		debugf("  char %d: %d [%X]\n", i, char, char)
+
+		//  if the bits won't fit:
+		if bitpos+4 > 20 {
+			space := 20 - bitpos
+			//  leftbits least significant bits of $char are left over in the next word
+			leftbits = 4 - space
+			debugf("  bits of char won't fit since bitpos is %d, got %d bits free, leaving %d bits in next word", bitpos, space, leftbits)
+		}
+
+		word |= (uint32(char) << uint(31-4-bitpos))
+
+		bitpos += 4
+
+		if bitpos >= 20 {
+			debugf("   appending word: %X\n", word)
+			out = append(out, appendMessageCodeword(word))
+			pos++
+			word = 0
+			bitpos = 0
+		}
+
+		if leftbits > 0 {
+			word |= (uint32(char) << uint(31-leftbits))
+			bitpos = leftbits
+			leftbits = 0
+		}
+	}
+
+	if bitpos > 0 {
+		debugf("  got %d bits in word at end of text, word: %X", bitpos, word)
+		step := 0
+		for bitpos < 20 {
+			if step == 2 {
+				word |= (1 << uint(30-bitpos))
+			}
+			bitpos++
+			step++
+			if step == 4 {
+				step = 0
+			}
+		}
+		out = append(out, appendMessageCodeword(word))
+		pos++
+	}
+
+	return pos, out
+}
+
 // appendMessage appends a single message to the end of the transmission blob.
 func appendMessage(startpos int, msg *Message) (int, Burst) {
 	// expand the parameters of the message
@@ -217,7 +293,13 @@ func appendMessage(startpos int, msg *Message) (int, Burst) {
 	pos++
 
 	// Next, append the message contents
-	contentEncLen, contentEnc := appendContentText(content)
+	var contentEncLen int
+	var contentEnc Burst
+	if msg.IsNumeric {
+		contentEncLen, contentEnc = appendContentNumeric(content)
+	} else {
+		contentEncLen, contentEnc = appendContentText(content)
+	}
 
 	tx = append(tx, contentEnc...)
 	pos += contentEncLen
@@ -296,7 +378,7 @@ func selectMsg(pos int, msgListRef []*Message) int {
 // in the next Generate() call and sent in the next brrraaaap.
 func Generate(messages []*Message, optionFns ...OptionFn) (Burst, []*Message) {
 	options := &Options{
-		MaxLen:       3000,
+		MaxLen:       2000,
 		PreambleBits: 576,
 	}
 	for _, opt := range optionFns {

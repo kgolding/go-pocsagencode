@@ -1,4 +1,4 @@
-Go port of the POCSAG::Encode Perl module.
+Golang port of the `POCSAG::Encode` Perl module extended to support Numeric as well as AlphaNumeric messages.
 
 Example usage
 
@@ -6,7 +6,6 @@ Example usage
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/kgolding/go-pocsagencode"
@@ -14,12 +13,7 @@ import (
 
 func main() {
 	messages := []*pocsagencode.Message{
-		&pocsagencode.Message{1300100, "Hello Pager!"},
-	}
-
-	for i := 0; i < 50; i++ {
-		addr := uint32(1200000 + i*100)
-		messages = append(messages, &pocsagencode.Message{addr, fmt.Sprintf("Hello pager number %d", addr)})
+		&pocsagencode.Message{1300100, "Hello Pager!", false},
 	}
 
 	log.Println("Sending", len(messages), "messages")
