@@ -2,6 +2,7 @@ package pocsagencode
 
 import (
 	"log"
+	"strings"
 )
 
 // Message is a single POCSAG Alphanumeric message
@@ -71,7 +72,7 @@ func calcBchAndParity(cw uint32) uint32 {
 		cw_with_parity = localCw + 1
 	}
 
-	debugf("  bch_and_parity returning %X\n", cw_with_parity)
+	debugf("  bch_and_parity returning %X [%b]\n", cw_with_parity, cw_with_parity)
 	return cw_with_parity
 }
 
@@ -190,9 +191,13 @@ func appendContentText(content string) (int, Burst) {
 func appendContentNumeric(content string) (int, Burst) {
 	out := make(Burst, 0)
 	debugf("appendContentNumeric: %s", content)
+	if mod5 := len(content) % 5; mod5 > 0 {
+		content = content + strings.Repeat(" ", 5-mod5)
+		debugf("padding to a multiple of 5 chars: '%s'", content)
+	}
 
 	// 084 2.6]195-3U7[
-	charMap := map[byte]byte{
+	charMap := map[byte]byte{ // Bit reversals
 		'0': 0, '8': 1, '4': 2, ' ': 3, '2': 4, '.': 5, '6': 6, ']': 7,
 		'1': 8, '9': 9, '5': 10, '-': 11, '3': 12, 'U': 13, '7': 14, '[': 15,
 	}
@@ -208,11 +213,11 @@ func appendContentNumeric(content string) (int, Burst) {
 		var ok bool
 		// set char from the charMap, and skip the character is not in the map
 		if char, ok = charMap[byte(r)]; !ok {
-			debugf("skipping invlaid char '%s'", string(r))
+			debugf("skipping invalid char '%s'", string(r))
 			continue
 		}
 
-		debugf("  char %d: %d [%X]\n", i, char, char)
+		debugf("  char %d: '%s' --> %d [%X]\n", i, string(r), char, char)
 
 		//  if the bits won't fit:
 		if bitpos+4 > 20 {
@@ -239,23 +244,6 @@ func appendContentNumeric(content string) (int, Burst) {
 			bitpos = leftbits
 			leftbits = 0
 		}
-	}
-
-	if bitpos > 0 {
-		debugf("  got %d bits in word at end of text, word: %X", bitpos, word)
-		step := 0
-		for bitpos < 20 {
-			if step == 2 {
-				word |= (1 << uint(30-bitpos))
-			}
-			bitpos++
-			step++
-			if step == 4 {
-				step = 0
-			}
-		}
-		out = append(out, appendMessageCodeword(word))
-		pos++
 	}
 
 	return pos, out

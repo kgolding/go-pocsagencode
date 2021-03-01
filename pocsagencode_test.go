@@ -7,9 +7,41 @@ import (
 )
 
 func init() {
-	SetLogger(log.New(os.Stdout, "POCSAG ", log.LstdFlags))
+	// SetLogger(log.New(os.Stdout, "POCSAG ", log.LstdFlags))
 	// Comment below to enable debug logging
 	SetLogger(nil)
+}
+
+func Test_Encode_NumericPadding(t *testing.T) {
+	SetLogger(log.New(os.Stdout, "POCSAG ", log.LstdFlags))
+	defer SetLogger(nil)
+
+	enc, left := Generate([]*Message{
+		&Message{1300100, "123", true},
+	})
+	if len(left) != 0 {
+		t.Errorf("expect no message left, got %v", left)
+	}
+
+	expect := Burst{
+		// 18 words, 576 bits of preamble
+		0xAAAAAAAA, 0xAAAAAAAA,
+		0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA,
+		0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA,
+		// The real data starts here
+		0x7CD215D8, 0x7A89C197, 0x7A89C197, 0x7A89C197, 0x7A89C197, 0x7A89C197, 0x7A89C197, 0x7A89C197,
+		0x7A89C197, 0x4F5A0109, 0xC2619CE1, 0x7A89C197, 0x7A89C197,
+	}
+
+	if len(enc) != len(expect) {
+		t.Errorf("expected:\n%s\ngot:\n%s\n", expect, enc)
+	} else {
+		for i, w := range expect {
+			if w != enc[i] {
+				t.Errorf("expected:%X got:%X at index %d\n", w, enc[i], i)
+			}
+		}
+	}
 }
 
 func Test_Encode_Numeric(t *testing.T) {
