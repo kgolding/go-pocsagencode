@@ -32,9 +32,14 @@ Usage: %s [-num] <pager addr> <text or numeric message>
 		fmt.Println("Invalid pager addr - must be a number")
 		os.Exit(2)
 	}
+	function := pc.FunctionAlpha
+	if num {
+		function = pc.FunctionNum
+	}
 	messages := []*pc.Message{
 		&pc.Message{
 			Addr:      uint32(addr),
+			Function:  function,
 			Content:   flag.Arg(0),
 			IsNumeric: num,
 		},

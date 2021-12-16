@@ -8,10 +8,12 @@ import (
 type FunctionBits byte
 
 const (
-	FunctionA = FunctionBits(00)
-	FunctionB = FunctionBits(01)
-	FunctionC = FunctionBits(10)
-	FunctionD = FunctionBits(11)
+	FunctionA     = FunctionBits(0b00)
+	FunctionB     = FunctionBits(0b01)
+	FunctionC     = FunctionBits(0b10)
+	FunctionD     = FunctionBits(0b11)
+	FunctionAlpha = FunctionBits(0b00)
+	FunctionNum   = FunctionBits(0b11)
 )
 
 // Message is a single POCSAG Alphanumeric message
