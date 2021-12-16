@@ -5,9 +5,19 @@ import (
 	"strings"
 )
 
+type FunctionBits byte
+
+const (
+	FunctionA = FunctionBits(00)
+	FunctionB = FunctionBits(01)
+	FunctionC = FunctionBits(10)
+	FunctionD = FunctionBits(11)
+)
+
 // Message is a single POCSAG Alphanumeric message
 type Message struct {
 	Addr      uint32
+	Function  FunctionBits
 	Content   string
 	IsNumeric bool
 }
@@ -253,7 +263,7 @@ func appendContentNumeric(content string) (int, Burst) {
 func appendMessage(startpos int, msg *Message) (int, Burst) {
 	// expand the parameters of the message
 	addr := msg.Addr
-	function := byte(0)
+	function := byte(msg.Function)
 	type_ := 'a'
 	content := msg.Content
 

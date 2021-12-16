@@ -17,7 +17,7 @@ func Test_Encode_NumericPadding(t *testing.T) {
 	defer SetLogger(nil)
 
 	enc, left := Generate([]*Message{
-		&Message{1300100, "123", true},
+		&Message{1300100, FunctionA, "123", true},
 	})
 	if len(left) != 0 {
 		t.Errorf("expect no message left, got %v", left)
@@ -47,7 +47,7 @@ func Test_Encode_NumericPadding(t *testing.T) {
 func Test_Encode_Numeric(t *testing.T) {
 
 	enc, left := Generate([]*Message{
-		&Message{1300100, "12[3]", true},
+		&Message{1300100, FunctionA, "12[3]", true},
 	})
 	if len(left) != 0 {
 		t.Errorf("expect no message left, got %v", left)
@@ -77,7 +77,7 @@ func Test_Encode_Numeric(t *testing.T) {
 func Test_Encode_Alpha(t *testing.T) {
 	// SetLogger(log.New(os.Stdout, "POCSAG ", log.LstdFlags))
 	enc, left := Generate([]*Message{
-		&Message{1300100, "happy christmas!", false},
+		&Message{1300100, FunctionA, "happy christmas!", false},
 	})
 	if len(left) != 0 {
 		t.Errorf("expect no message left, got %v", left)

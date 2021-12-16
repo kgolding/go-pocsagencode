@@ -13,7 +13,7 @@ import (
 
 func main() {
 	messages := []*pocsagencode.Message{
-		&pocsagencode.Message{1300100, "Hello Pager!", false},
+		&pocsagencode.Message{1300100, FunctionA, "Hello Pager!", false},
 	}
 
 	log.Println("Sending", len(messages), "messages")
